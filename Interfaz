@@ -1,0 +1,813 @@
+from tkinter import *
+from tkinter.ttk import *
+from tkinter import ttk
+############################################################
+from tkinter import *              # es la interfaz por defecto de Python para el kit de herramientas de GUI Tk
+import os                          # El módulo os provee docenas de funciones para interactuar con el sistema operativo
+import numpy as np
+from mtcnn.mtcnn import MTCNN      # Redes neuronales convolucionales en cascada multitarea para la detección de rostros, basadas en TensorFlow
+import cv2                         # librería de programación de código abierto dirigida principalmente a la visión por computador en tiempo real
+#from cv2 import resize            # resize se uiliza para cambiar el tamaño de imagenes
+from matplotlib import pyplot      # es una librería de Python especializada en la creación de gráficos en dos dimensiones.    
+from datetime import datetime      # se utiliza para  incorporar los tipos de datos date, time y datetime para representar fechas y funciones para manejarlas
+from tkinter import messagebox     # paquete de tkinter para la apertura de dialogos de informacion
+#from PIL import Image,ImageTk
+#----------------------------librerias para sensor de huella
+import time                        # Este módulo proporciona varias funciones relacionadas con el tiempo.
+import board                       # libreria para usar los pines de la raspberry pi
+import busio                       # para señales I2C
+import adafruit_fingerprint        # librera para usar el sensor de huella dactilares 
+import serial                      # libreria para usar el puerto serie 
+
+from mlx90614 import MLX90614
+from smbus2 import SMBus
+#conexion de sensor de huella
+uart = serial.Serial("/dev/ttyS0", baudrate=57600, timeout=1)
+
+finger = adafruit_fingerprint.Adafruit_Fingerprint(uart)
+
+bus = SMBus(1)
+sensor = MLX90614(bus, address=0x5A)
+celcius = sensor.get_object_1()+17
+###########################################################
+index=Tk()
+index.title("SEGURIDAD IPN TT")
+index.attributes('-fullscreen', True) 
+index.resizable(width=True, height=True)
+index.config(bg='DeepPink4')
+
+lspace=Label(index, text="", background="DeepPink4")
+lspace.pack()
+
+linto=Label(index, text="INSTITUTO POLITÉCNICO NACIONAL", background="DeepPink4", foreground="white", border=3)
+linto.pack()
+
+lspace=Label(index, text="", background="DeepPink4")
+lspace.pack()
+
+linto=Label(index, text="UNIDAD PROFESIONAL INTERDISCIPLINARIA DE INGENIERÍAS\nCAMPUS HIDALGO", background="DeepPink4", foreground="white", border=3)
+linto.pack()
+
+lspace=Label(index, text="", background="DeepPink4")
+lspace.pack()
+
+linto=Label(index, text="TRABAJO TERMINAL", background="DeepPink4", foreground="white", border=3)
+linto.pack()
+
+lspace=Label(index, text="", background="DeepPink4")
+lspace.pack()
+
+linto=Label(index, text="Prototipo de acceso con control mediante visión artificial, huella dactilar, medición de temperatura corporal y despachador de gel automático", background="DeepPink4", foreground="white", border=3)
+linto.pack()
+
+lspace=Label(index, text="", background="DeepPink4")
+lspace.pack()
+
+lspace=Label(index, text="", background="DeepPink4")
+lspace.pack()
+
+luser=Label(index, text="Ingrese nombre de usuario:", background="DeepPink4", foreground="white", border=3)
+luser.pack()
+
+lspace=Label(index, text="", background="DeepPink4")
+lspace.pack()
+
+user=StringVar()
+euser=Entry(index, width=30, textvariable=user)
+euser.pack()
+
+lspace=Label(index, text="", background="DeepPink4")
+lspace.pack()
+
+lpas=Label(index, text="Password:", background="DeepPink4", foreground="white", border=3)
+lpas.pack()
+
+lspace=Label(index, text="", background="DeepPink4")
+lspace.pack()
+
+pas=StringVar()
+epas=Entry(index, width=30, textvariable=pas, show="*")
+epas.pack()
+
+lspace=Label(index, text="", background="DeepPink4")
+lspace.pack()
+
+def ingresar():
+    if user.get()=="admin" and pas.get()=="admin":
+        root1 = Tk()
+        root1.title("LOGIN")
+        root1.attributes('-fullscreen', True)
+        root1.resizable(width=True, height=True)
+        root1.config(bg='DeepPink4')
+        frm1 = ttk.Frame(root1, padding=10)
+        frm1.pack()
+        ttk.Label(frm1, text="Bienvenido al Sistema!").pack()
+        ttk.Button(frm1, text="Aceptar", command=root1.destroy).pack()
+        index.destroy()
+        global login
+        global iniciar_Sesion
+        def get_fingerprint():
+            """Get a finger print image, template it, and see if it matches!"""
+            print("Waiting for image...")
+            while finger.get_image() != adafruit_fingerprint.OK:
+                pass
+            print("Templating...")
+            if finger.image_2_tz(1) != adafruit_fingerprint.OK:
+                return False
+            print("Searching...")
+            if finger.finger_search() != adafruit_fingerprint.OK:
+                return False
+            return True
+
+        def Registro_huellas():
+            global pant
+            reg_huellas = Toplevel(pantalla) #Esta pantalla es de un nivel superior a la principal
+            reg_huellas.title("Registro")
+            width= reg_huellas.winfo_screenwidth()  
+            height= reg_huellas.winfo_screenheight()
+            reg_huellas.geometry("%dx%d" % (width, height))
+            reg_huellas.config(background='LightGoldenrod1')
+         #--------- Empezaremos a crear las entradas ----------------------------------------
+            user_num = StringVar()
+            Label(reg_huellas, text = "REGISTRO DE HUELLA DIGITAL :",bg = "gray", width = "300", height = "2", font = ("Verdana", 13)).pack()
+            print("----------------")
+            if finger.read_templates() != adafruit_fingerprint.OK:
+                raise RuntimeError("Failed to read templates")
+            print("Fingerprint templates:", finger.templates)
+            Label(reg_huellas, text="#ID de usuarios registrados: " +str(finger.templates),font = ("Verdana", 26) ).place(relx=0, rely=0.05)
+            i = Entry(reg_huellas, textvariable=user_num,font = ("Verdana", 26)  ).place(relx=0.35, rely=0.11)
+            
+            
+            def into():
+                global j
+                num_esc = Label(reg_huellas, text="escogiste el numero " + user_num.get(),font = ("Verdana", 26) ).place(relx=0.6, rely=0.11)
+                j = int(user_num.get())
+                print(j)
+            Btn4 = Button(reg_huellas, text="Relaciona ID con huella",font = ("Verdana", 20) , command=into).place(relx=0.40, rely=0.17)
+            Btn5 = Button(reg_huellas, text="Empezar registro",font = ("Verdana", 20), command=lambda:enroll_finger(get_num())).place(relx=0.40, rely=0.27)
+            Btn6 = Button(reg_huellas, text="REGRESAR",font = ("Verdana", 20), command=reg_huellas.destroy).place(relx=0.40, rely=0.47)    
+            
+            def get_fingerprint():
+                """Get a finger print image, template it, and see if it matches!"""
+                print("Esperando imagen...")
+                while finger.get_image() != adafruit_fingerprint.OK:
+                    pass
+                print("Plantillas...")
+                if finger.image_2_tz(1) != adafruit_fingerprint.OK:
+                    return False
+                print("Buscando...")
+                if finger.finger_search() != adafruit_fingerprint.OK:
+                    return False
+                return True
+
+            def get_fingerprint_detail():
+                print("Obtener imagen...", end="", flush=True)
+                i = finger.get_image()
+                if i == adafruit_fingerprint.OK:
+                    print("Imagen tomada")
+                else:
+                    if i == adafruit_fingerprint.NOFINGER:
+                        print("Ningun dedo detectado")
+                    elif i == adafruit_fingerprint.IMAGEFAIL:
+                        print("Error de imagen")
+                    else:
+                        print("Otro error")
+                    return False
+
+                print("Plantillas...", end="", flush=True)
+                i = finger.image_2_tz(1)
+                if i == adafruit_fingerprint.OK:
+                    print("Con plantilla")
+                else:
+                    if i == adafruit_fingerprint.IMAGEMESS:
+                        print("Imagen demasiado desordenada")
+                    elif i == adafruit_fingerprint.FEATUREFAIL:
+                        print("No se pueden identificar caracteristicas")
+                    elif i == adafruit_fingerprint.INVALIDIMAGE:
+                        print("Image invalida")
+                    else:
+                        print("Otro error")
+                    return False
+
+                print("buscando...", end="", flush=True)
+                i = finger.finger_fast_search()
+                # pylint: disable=no-else-return
+                # This block needs to be refactored when it can be tested.
+                if i == adafruit_fingerprint.OK:
+                    print("huella dactilar encontrada!")
+                    return True
+                else:
+                    if i == adafruit_fingerprint.NOTFOUND:
+                        print("No se encontraron coincidencias")
+                    else:
+                        print("Otro error")
+                    return False
+
+
+            def enroll_finger(location):
+                """Take a 2 finger images and template it, then store in 'location'"""
+                for fingerimg in range(1, 3):
+                    if fingerimg == 1:
+                        print("Coloque el dedo en el sensor...", end="", flush=True)
+                    else:
+                        print("Vuelva a colocar el mismo dedo...", end="", flush=True)
+
+                    while True:
+                        i = finger.get_image()
+                        if i == adafruit_fingerprint.OK:
+                            print("Imagen tomada")
+                            break
+                        if i == adafruit_fingerprint.NOFINGER:
+                            print(".", end="", flush=True)
+                        elif i == adafruit_fingerprint.IMAGEFAIL:
+                            print("Error en imagen")
+                            return False
+                        else:
+                            print("Otro error")
+                            return False
+
+                    print("Plantillas...", end="", flush=True)
+                    i = finger.image_2_tz(fingerimg)
+                    if i == adafruit_fingerprint.OK:
+                        print("Con plantilla")
+                    else:
+                        if i == adafruit_fingerprint.IMAGEMESS:
+                            print("Imagen demasiado desordenada")
+                        elif i == adafruit_fingerprint.FEATUREFAIL:
+                            print("No se pudieron identificar caracteristicas")
+                        elif i == adafruit_fingerprint.INVALIDIMAGE:
+                            print("Imagen invalida")
+                        else:
+                            print("Otro error")
+                        return False
+
+                    if fingerimg == 1:
+                        print("quitar el dedo")
+                        
+                        time.sleep(1)
+                        while i != adafruit_fingerprint.NOFINGER:
+                            i = finger.get_image()
+                
+                print("Creando modelo...", end="", flush=True)
+                i = finger.create_model()
+                if i == adafruit_fingerprint.OK:
+                    print("Creado")
+                else:
+                    if i == adafruit_fingerprint.ENROLLMISMATCH:
+                        print("Las impresiones no coinciden")
+                        modelo = Label(reg_huellas, text="Las impresiones no coinciden ",font = ("Verdana", 20)).place(relx=0.35, rely=0.37)
+                    else:
+                        print("Otro error")
+                    return False
+
+                print("Modelo de almacenamiento #%d..." % location, end="", flush=True)
+                
+                i = finger.store_model(location)
+                if i == adafruit_fingerprint.OK:
+                    print("Almacenado")
+                    modelo = Label(reg_huellas, text="Modelo Almacenado #%d... "% location, font = ("Verdana", 20)  ).place(relx=0.35, rely=0.37)
+                    txt = Label(reg_huellas, text="Tu temperatura es: "+str(round(celcius, 2)), font = ("Verdana", 20)).place(relx=0.35, rely=0.41)
+                else:
+                    if i == adafruit_fingerprint.BADLOCATION:
+                        print("mala ubicacion de almacenamiento")
+                    elif i == adafruit_fingerprint.FLASHERR:
+                        print("Error de almacenamiento Flash")
+                        modelo = Label(reg_huellas, text="Modelo No Almacenado ",font = ("Verdana", 20)  ).place(relx=0.3, rely=0.40)
+                    else:
+                        print("Otro error")
+                    return False
+
+                return True
+            def get_num():
+                """Use input() to get a valid number from 1 to 127. Retry till success!"""
+                i = 0
+                while (i > 127) or (i < 1):
+                    try:
+                        i = j
+                        print("Ingrese su ID # de 1-127: ", j)
+                    except ValueError:
+                        pass
+                return i
+
+        def buscar_huella():
+         
+            if get_fingerprint():
+                pantalla1.destroy()
+                print("Usuario detectado #", finger.finger_id, "with confidence", finger.confidence)
+                messagebox.showinfo(message="usuario encontrado"+"\nTu temperatura es: "+str(round(celcius, 2)))
+                fecha1= datetime.now()
+                fecha=fecha1.strftime("%d/%m/%Y----------hora: %H:%M:%S")
+                f=open("registrohuella.csv","a")
+                f.write("\n"+"NUM USUARIO:"+ str(finger.finger_id)+ "-----" +"fecha:"+str(fecha)+"Temperatura:"+str(round(celcius, 2)))
+                f.close()
+                
+            else:
+                pantalla1.destroy()
+                print("Huella no identificada")
+                messagebox.showinfo(message="usuario no encontrado", title="registro")
+
+
+        #----------------Eliminar usuario----------------   
+         
+        def elim_usuario():
+            global pantalla3
+            pantalla3 = Toplevel(pantalla) #Esta pantalla es de un nivel superior a la principal
+            pantalla3.title("Registro")
+            width= pantalla3.winfo_screenwidth()  
+            height= pantalla3.winfo_screenheight()
+            pantalla3.geometry("%dx%d" % (width, height))
+            pantalla3.config(background='LightGoldenrod1')
+            
+            #--------- Empezaremos a crear las entradas ----------------------------------------
+            user_num = StringVar()
+            Label(pantalla3, text = "ELIMINAR ID DE USUARIO :",bg = "gray", width = "300", height = "2", font = ("Verdana", 26)).pack()
+            
+            i = Entry(pantalla3, textvariable=user_num, font = ("Verdana", 26)).place(relx=0.3, rely=0.1)
+            
+            def get_num():
+                """Use input() to get a valid number from 1 to 127. Retry till success!"""
+                i = 0
+                while (i > 127) or (i < 1):
+                    try:
+                        i = j
+                        print("Ingrese su ID # de 1-127: ", j)
+                    except ValueError:
+                        pass
+                return i
+
+            def delet():
+                if finger.delete_model(get_num()) == adafruit_fingerprint.OK:
+                    print("usuario borrado")
+                    modelo = Label(pantalla3, text="usuario eliminado del registro ", font = ("Verdana", 26)).place(relx=0.35, rely=0.37)
+                    
+                else:
+                    print("Error al borrar")
+                    modelo = Label(pantalla3, text="error al eliminar usuario ").place(relx=0.35, rely=0.27)
+            
+            def eliminar():
+                global j
+                num_esc = Label(pantalla3, text="escogiste el numero " + user_num.get(), font = ("Verdana", 26) ).place(relx=0.6, rely=0.1)
+                j = int(user_num.get())
+                print(j)
+            Btn4 = Button(pantalla3, text="Relaciona ID con huella",font = ("Verdana", 20), command=eliminar).place(relx=0.35, rely=0.17)
+            Btn5 = Button(pantalla3, text="Eliminar Registro", font = ("Verdana", 20), command= delet ).place(relx=0.35, rely=0.27)
+            Btn6 = Button(pantalla3, text="REGRESAR",font = ("Verdana", 20), command=pantalla3.destroy).place(relx=0.35, rely=0.47)
+        
+        def iniciar_Sesion():
+            global usuario
+            global usuario_entrada
+            global pantalla1
+            pantalla1 = Toplevel(pantalla) #Esta pantalla es de un nivel superior a la principal
+            pantalla1.title("Registro")
+            width= pantalla1.winfo_screenwidth()  
+            height= pantalla1.winfo_screenheight()
+            pantalla1.geometry("%dx%d" % (width, height))
+            pantalla1.config(background='LightGoldenrod1')
+         #--------- Empezaremos a crear las entradas ----------------------------------------
+            usuario = StringVar()
+            Label(pantalla1, text = "LOGIN CON HUELLA DIGITAL :",bg = "gray", width = "300", height = "2", font = ("Verdana", 13)).pack()
+            Label(pantalla1, text = "", background='LightGoldenrod1').pack()  #Dejamos un poco de espacio
+            Label(pantalla1, text = "", background='LightGoldenrod1').pack()  #Dejamos un poco de espacio
+            Label(pantalla1, text = "Coloca tu dedo en el sensor", bg = 'LightGray',  font = ("Verdana", 13)).pack()  #Mostramos en la pantalla 1 el usuario
+            Label(pantalla1, text = "", background='LightGoldenrod1').pack()  #Dejamos un espacio para la creacion del boton
+            #------------ Vamos a crear el boton para hacer el registro facial --------------------
+            Label(pantalla1, text = "", background='LightGoldenrod1').pack()
+            Button(pantalla1, text = "Iniciar login ",height = "2", width = "20",  font = ("Verdana", 13), background= "DarkOrange1", command= buscar_huella).pack()
+            Label(pantalla1, text = "", background='LightGoldenrod1').pack()
+            Button(pantalla1, text = "regresar",height = "2", width = "20",  font = ("Verdana", 10), background= "DarkOrange1",command = pantalla1.destroy).pack()        
+
+         #--------------------------- Funcion para almacenar el registro facial --------------------------------------    
+        def registro_facial():
+                #Vamos a capturar el rostro
+            cap = cv2.VideoCapture("http://192.168.0.112:8081/video")               #Elegimos la camara con la que vamos a hacer la deteccion
+            while(True):
+                ret,frame = cap.read()#Leemos el video
+                image = np.zeros(frame.shape,np.uint8)
+                smaller_frame=cv2.resize(frame,(0,0),fx=0.5,fy=0.6)
+                cv2.imshow('Registro Facial',frame)         #Mostramos el video en pantalla
+                if cv2.waitKey(1) == 27:            #Cuando oprimamos "Escape" rompe el video
+                    break
+            usuario_img = usuario.get()
+            cv2.imwrite(usuario_img+".jpg",frame)       #Guardamos la ultima caputra del video como imagen y asignamos el nombre del usuario
+            cap.release()                               #Cerramos
+            cv2.destroyAllWindows()
+            usuario_entrada.delete(0,END)   #Limpiamos los text variables
+            pantalla1.destroy()
+            messagebox.showinfo(message="usuario registrado"+"\nTu temperatura es: "+str(round(celcius, 2)), title="registro")
+                #----------------- Detectamos el rostro y exportamos los pixeles -------------------------- 
+            def reg_rostro(img, lista_resultados):
+                data = pyplot.imread(img)
+                for i in range(len(lista_resultados)):
+                    x1,y1,ancho, alto = lista_resultados[i]['box']
+                    x2,y2 = x1 + ancho, y1 + alto
+                    pyplot.subplot(1, len(lista_resultados), i+1)
+                    pyplot.axis('off')
+                    cara_reg = data[y1:y2, x1:x2]
+                    cara_reg = cv2.resize(cara_reg,(150,200), interpolation = cv2.INTER_CUBIC) #Guardamos la imagen con un tamaño de 150x200
+                    cv2.imwrite(usuario_img+".jpg",cara_reg)
+                    pyplot.imshow(data[y1:y2, x1:x2])
+                pyplot.show()
+
+            img =usuario_img+".jpg"
+            pixeles = pyplot.imread(img)
+            detector = MTCNN()
+            caras = detector.detect_faces(pixeles)
+            reg_rostro(img, caras)
+
+        #___________pantalla registro_________________________
+                #------------------------Crearemos una funcion para asignar al boton registro --------------------------------
+        def registro():
+            global usuario
+            global usuario_entrada
+            global pantalla1
+            pantalla1 = Toplevel(pantalla) #Esta pantalla es de un nivel superior a la principal
+            pantalla1.title("Registro")
+            width= pantalla1.winfo_screenwidth()  
+            height= pantalla1.winfo_screenheight()
+            pantalla1.geometry("%dx%d" % (width, height))
+            pantalla1.config(background='LightGoldenrod1')
+         #--------- Empezaremos a crear las entradas ----------------------------------------
+            usuario = StringVar()
+            Label(pantalla1, text = "Registro facial: debe de asignar un usuario:",bg = "gray", width = "300", height = "2", font = ("Verdana", 13)).pack()
+            Label(pantalla1, text = "", background='LightGoldenrod1').pack()  #Dejamos un poco de espacio
+            Label(pantalla1, text = "", background='LightGoldenrod1').pack()  #Dejamos un poco de espacio
+            Label(pantalla1, text = "Registrar nombre de usuario", bg = 'LightGray',  font = ("Verdana", 13)).pack()  #Mostramos en la pantalla 1 el usuario
+            usuario_entrada = Entry(pantalla1, textvariable = usuario, font = ("Verdana", 20)) #Creamos un text variable para que el usuario ingrese la info
+            usuario_entrada.pack()
+            Label(pantalla1, text = "", background='LightGoldenrod1').pack()  #Dejamos un espacio para la creacion del boton
+            #------------ Vamos a crear el boton para hacer el registro facial --------------------
+            Label(pantalla1, text = "", background='LightGoldenrod1').pack()
+            Button(pantalla1, text = "Registro Facial",height = "2", width = "20",  font = ("Verdana", 13), background= "DarkOrange1",command = registro_facial).pack()
+            Label(pantalla1, text = "", background='LightGoldenrod1').pack()
+            Button(pantalla1, text = "regresar",height = "2", width = "20",  font = ("Verdana", 10), background= "DarkOrange1",command = pantalla1.destroy).pack()
+
+
+          #--------------------------Funcion para el Login Facial --------------------------------------------------------
+        def login_facial():
+                #------------------------------Vamos a capturar el rostro-----------------------------------------------------
+            cap = cv2.VideoCapture("http://192.168.0.112:8081/video")               #Elegimos la camara con la que vamos a hacer la deteccion
+            while(True):
+                ret,frame = cap.read()              #Leemos el video
+                cv2.imshow('Login Facial',frame)         #Mostramos el video en pantalla
+                if cv2.waitKey(1) == 27:            #Cuando oprimamos "Escape" rompe el video
+                    break
+            usuario_login = verificacion_usuario.get()    #Con esta variable vamos a guardar la foto pero con otro nombre para no sobreescribir
+            cv2.imwrite(usuario_login+"LOG.jpg",frame)       #Guardamos la ultima caputra del video como imagen y asignamos el nombre del usuario
+            cap.release()                               #Cerramos
+            cv2.destroyAllWindows()
+
+            usuario_entrada2.delete(END,0)   #Limpiamos los text variables
+
+              #----------------- Funcion para guardar el rostro --------------------------
+                
+            def log_rostro(img, lista_resultados):
+                data = pyplot.imread(img)
+                for i in range(len(lista_resultados)):
+                    x1,y1,ancho, alto = lista_resultados[i]['box']
+                    x2,y2 = x1 + ancho, y1 + alto
+                    pyplot.subplot(1, len(lista_resultados), i+1)
+                    pyplot.axis('off')
+                    cara_reg = data[y1:y2, x1:x2]
+                    cara_reg = cv2.resize(cara_reg,(150,200), interpolation = cv2.INTER_CUBIC) #Guardamos la imagen 150x200
+                    cv2.imwrite(usuario_login+"LOG.jpg",cara_reg)
+                    return pyplot.imshow(data[y1:y2, x1:x2])
+                pyplot.show()
+
+                 #-------------------------- Detectamos el rostro-------------------------------------------------------
+                
+            img = usuario_login+"LOG.jpg"
+            pixeles = pyplot.imread(img)
+            detector = MTCNN()
+            caras = detector.detect_faces(pixeles)
+            log_rostro(img, caras)
+
+
+            #-------------------------- Funcion para comparar los rostros --------------------------------------------
+            def orb_sim(img1,img2):
+                orb = cv2.ORB_create()  #Creamos el objeto de comparacion
+            
+                kpa, descr_a = orb.detectAndCompute(img1, None)  #Creamos descriptor 1 y extraemos puntos claves
+                kpb, descr_b = orb.detectAndCompute(img2, None)  #Creamos descriptor 2 y extraemos puntos claves
+
+                comp = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck = True) #Creamos comparador de fuerza
+
+                matches = comp.match(descr_a, descr_b)  #Aplicamos el comparador a los descriptores
+
+                regiones_similares = [i for i in matches if i.distance < 70] #Extraemos las regiones similares en base a los puntos claves
+                if len(matches) == 0:
+                    return 0
+                return len(regiones_similares)/len(matches)  #Exportamos el porcentaje de similitud
+                     
+            #---------------------------- Importamos las imagenes y llamamos la funcion de comparacion ---------------------------------  
+            im_archivos = os.listdir()   #Vamos a importar la lista de archivos con la libreria os
+            if usuario_login+".jpg" in im_archivos:   #Comparamos los archivos con el que nos interesa
+                rostro_reg = cv2.imread(usuario_login+".jpg",0)     #Importamos el rostro del registro
+                rostro_log = cv2.imread(usuario_login+"LOG.jpg",0)  #Importamos el rostro del inicio de sesion
+                similitud = orb_sim(rostro_reg, rostro_log)
+                if similitud >= 0.97:
+                    pantalla2.destroy()
+                    messagebox.showinfo(message="Inicio de Sesion Exitoso,usuario y fecha registrados"+"\nTemperatura:"+str(round(celcius, 2)), title="LOGIN")
+                    print("Bienvenido al sistema usuario: ",usuario_login)
+                    print("Compatibilidad con la foto del registro: ",similitud)
+                    fecha1= datetime.now()
+                    fecha=fecha1.strftime("%d/%m/%Y----------hora: %H:%M:%S")
+                    log_usuario3 = verificacion_usuario.get() 
+                    f=open("registro.csv","a")
+                    f.write("\n"+"USUARIO:"+ log_usuario3 + "-----" +"fecha:"+str(fecha)+"Temperatura:"+str(round(celcius, 2)))
+                    f.close()
+                    
+                else:
+                    pantalla2.destroy()
+                    messagebox.showinfo(message="Rostro incompatible", title="registro")
+                    print("Rostro incorrecto, Cerifique su usuario")
+                    print("Compatibilidad con la foto del registro: ",similitud)
+                    #Label(pantalla2, text = "Incompatibilidad de rostros", fg = "red", font = ("Calibri",11)).pack()
+            else:
+                pantalla2.destroy()
+                print("Usuario no encontrado")
+                messagebox.showinfo(message="Usuario no encontrado", title="registro")
+                
+                #------------------------Funcion que asignaremos al boton login -------------------------------------------------       
+        
+        def login():
+            global pantalla2
+            global verificacion_usuario
+            global usuario_entrada2     
+            pantalla2 = Toplevel(pantalla)
+            pantalla2.title("Login")
+            width= pantalla2.winfo_screenwidth()  
+            height= pantalla2.winfo_screenheight()
+            pantalla2.geometry("%dx%d" % (width, height))
+            pantalla2.config(background='LightGoldenrod1')
+            verificacion_usuario = StringVar()
+
+                  #---------------------------------- Ingresamos los datos --------------------------
+            Label(pantalla2,text = "Login con registro facial", bg = "gray", width = "300", height = "2", font = ("Verdana", 26)).pack() 
+            Label(pantalla2,text = "",background='LightGoldenrod1').pack()
+            Label(pantalla2,text = "",background='LightGoldenrod1').pack()
+            Label(pantalla2, text = "ingresar nombre de usuario:", font = ("Verdana", 15)).pack()
+            usuario_entrada2 = Entry(pantalla2, textvariable = verificacion_usuario, font = ("Verdana", 20))
+            usuario_entrada2.pack()
+            Label(pantalla2, text = "", background='LightGoldenrod1').pack()
+
+            #------------ Vamos a crear el boton para hacer el login facial --------------------
+            Label(pantalla2, text = "", background='LightGoldenrod1').pack()
+            Button(pantalla2, text = "Inicio de Sesion Facial",  font = ("Verdana", 20), background= "DarkOrange1",command =login_facial).pack()
+            Label(pantalla2, text = "", background='LightGoldenrod1').pack()
+            Label(pantalla2, text = "", background='LightGoldenrod1').pack()
+            Button(pantalla2, text = "regresar",height = "2", width = "20",  font = ("Verdana", 10), background= "DarkOrange1",command = pantalla2.destroy).pack()
+
+        def pantalla_principal():
+            global pantalla          #Globalizamos la variable para usarla en otras funciones
+            pantalla = Tk()
+            width= pantalla.winfo_screenwidth()  
+            height= pantalla.winfo_screenheight()
+            pantalla.geometry("%dx%d" % (width, height))  #Asignamos el tamaño de la ventana 
+            pantalla.config(background='LightGoldenrod1')
+            pantalla.title("proyecto ipn")       #Asignamos el titulo de la pantalla
+            Label(text = "SISTEMA DE CONTROL DE ACCESO", bg = "gray", width = "300", height = "2", font = ("Verdana", 26)).pack() #Asignamos caracteristicas de la ventana  
+           
+            #------------------------- Vamos a Crear los Botones ------------------------------------------------------    
+            Label(text = "",background='LightGoldenrod1').pack()  #Creamos el espacio entre el titulo y el primer boton
+            Button(text = "Login con rostro", height = "2", width = "20",  font = ("Verdana", 15), background= "DarkOrange1",command = login).place(relx=0.6, rely=0.1)
+            Button(text = "Login con huella digital", height = "2", width = "20",  font = ("Verdana", 15), background= "DarkOrange1", command= iniciar_Sesion).place(relx=0.6, rely=0.25)
+            Label(text = "",background='LightGoldenrod1').pack()
+            Button(text = "Registrar rostro", height = "2", width = "20",  font = ("Verdana", 15), background= "DarkOrange1", command = registro).place(relx=0.3, rely=0.1)
+            Button(text = "Registrar huella digital", height = "2", width = "20",  font = ("Verdana", 15), background= "DarkOrange1", command = Registro_huellas).place(relx=0.3, rely=0.20)
+            Button(text = "Eliminar huella digital", height = "2", width = "20",  font = ("Verdana", 15), background= "DarkOrange1", command = elim_usuario).place(relx=0.3, rely=0.30)
+            
+            Button(pantalla, text = "SALIR",height = "2", width = "20",  font = ("Verdana", 10), background= "DarkOrange1",command = pantalla.destroy).place(relx=0.5, rely=0.5)
+            Label(text = "",background='LightGoldenrod1').pack()
+
+            pantalla.mainloop()
+
+        pantalla_principal()
+        root1.mainloop()
+
+    else:
+        root1 = Tk()
+        root1.title("LOGIN")
+        root1.geometry("150x75")
+        root1.resizable(width=True, height=True)
+        frm1 = ttk.Frame(root1, padding=10)
+        frm1.grid()
+        ttk.Label(frm1, text="Usuario y/o contraseña \n incorrectos").grid(column=0, row=0)
+        ttk.Button(frm1, text="Aceptar", command=root1.destroy).grid(column=0, row=1)
+        root1.mainloop()
+
+def user_public():
+    def get_fingerprint():
+        """Get a finger print image, template it, and see if it matches!"""
+        print("Waiting for image...")
+        while finger.get_image() != adafruit_fingerprint.OK:
+            pass
+        print("Templating...")
+        if finger.image_2_tz(1) != adafruit_fingerprint.OK:
+            return False
+        print("Searching...")
+        if finger.finger_search() != adafruit_fingerprint.OK:
+            return False
+        return True
+    def buscar_huella():    
+        if get_fingerprint():
+            panta.destroy()
+            print("Usuario detectado #", finger.finger_id, "with confidence", finger.confidence)
+            messagebox.showinfo(message="usuario encontrado"+"Temperatura:"+str(round(celcius, 2)), title="registro")
+            fecha1= datetime.now()
+            fecha=fecha1.strftime("%d/%m/%Y----------hora: %H:%M:%S")
+            f=open("registrohuella.csv","a")
+            f.write("\n"+"NUM USUARIO:"+ str(finger.finger_id)+ "-----" +"fecha:"+str(fecha)+"Temperatura:"+str(round(celcius, 2)))
+            f.close()
+            
+        else:
+            panta.destroy()
+            print("Huella no identificada")
+            messagebox.showinfo(message="usuario no encontrado", title="registro")
+    def iniciar_Sesion():
+        global usuario
+        global usuario_entrada
+        global panta
+        panta = Toplevel(pantalla1) #Esta pantalla es de un nivel superior a la principal
+        panta.title("Registro")
+        width= panta.winfo_screenwidth()  
+        height= panta.winfo_screenheight()
+        panta.geometry("%dx%d" % (width, height))
+        panta.config(background='LightGoldenrod1')
+     #--------- Empezaremos a crear las entradas ----------------------------------------
+        usuario = StringVar()
+        Label(panta, text = "LOGIN CON HUELLA DIGITAL :",bg = "gray", width = "300", height = "2", font = ("Verdana", 13)).pack()
+        Label(panta, text = "", background='LightGoldenrod1').pack()  #Dejamos un poco de espacio
+        Label(panta, text = "", background='LightGoldenrod1').pack()  #Dejamos un poco de espacio
+        Label(panta, text = "Coloca tu dedo en el sensor", bg = 'LightGray',  font = ("Verdana", 13)).pack()  #Mostramos en la pantalla 1 el usuario
+        Label(panta, text = "", background='LightGoldenrod1').pack()  #Dejamos un espacio para la creacion del boton
+        #------------ Vamos a crear el boton para hacer el registro facial --------------------
+        Label(panta, text = "", background='LightGoldenrod1').pack()
+        Button(panta, text = "Iniciar login ",height = "2", width = "20",  font = ("Verdana", 13), background= "DarkOrange1", command= buscar_huella).pack()
+        Label(panta, text = "", background='LightGoldenrod1').pack()
+        Button(panta, text = "regresar",height = "2", width = "20",  font = ("Verdana", 10), background= "DarkOrange1",command = pantalla1.destroy).pack()        
+
+    def login_facial():
+            #------------------------------Vamos a capturar el rostro-----------------------------------------------------
+        cap = cv2.VideoCapture("http://192.168.0.112:8081/video")               #Elegimos la camara con la que vamos a hacer la deteccion
+        while(True):
+            ret,frame = cap.read()              #Leemos el video
+            cv2.imshow('Login Facial',frame)         #Mostramos el video en pantalla
+            if cv2.waitKey(1) == 27:            #Cuando oprimamos "Escape" rompe el video
+                break
+        usuario_login = verificacion_usuario.get()    #Con esta variable vamos a guardar la foto pero con otro nombre para no sobreescribir
+        cv2.imwrite(usuario_login+"LOG.jpg",frame)       #Guardamos la ultima caputra del video como imagen y asignamos el nombre del usuario
+        cap.release()                               #Cerramos
+        cv2.destroyAllWindows()
+
+        usuario_entrada2.delete(END,0)   #Limpiamos los text variables
+
+          #----------------- Funcion para guardar el rostro --------------------------
+            
+        def log_rostro(img, lista_resultados):
+            data = pyplot.imread(img)
+            for i in range(len(lista_resultados)):
+                x1,y1,ancho, alto = lista_resultados[i]['box']
+                x2,y2 = x1 + ancho, y1 + alto
+                pyplot.subplot(1, len(lista_resultados), i+1)
+                pyplot.axis('off')
+                cara_reg = data[y1:y2, x1:x2]
+                cara_reg = cv2.resize(cara_reg,(150,200), interpolation = cv2.INTER_CUBIC) #Guardamos la imagen 150x200
+                cv2.imwrite(usuario_login+"LOG.jpg",cara_reg)
+                return pyplot.imshow(data[y1:y2, x1:x2])
+            pyplot.show()
+
+             #-------------------------- Detectamos el rostro-------------------------------------------------------
+            
+        img = usuario_login+"LOG.jpg"
+        pixeles = pyplot.imread(img)
+        detector = MTCNN()
+        caras = detector.detect_faces(pixeles)
+        log_rostro(img, caras)
+
+
+        #-------------------------- Funcion para comparar los rostros --------------------------------------------
+        def orb_sim(img1,img2):
+            orb = cv2.ORB_create()  #Creamos el objeto de comparacion
+        
+            kpa, descr_a = orb.detectAndCompute(img1, None)  #Creamos descriptor 1 y extraemos puntos claves
+            kpb, descr_b = orb.detectAndCompute(img2, None)  #Creamos descriptor 2 y extraemos puntos claves
+
+            comp = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck = True) #Creamos comparador de fuerza
+
+            matches = comp.match(descr_a, descr_b)  #Aplicamos el comparador a los descriptores
+
+            regiones_similares = [i for i in matches if i.distance < 70] #Extraemos las regiones similares en base a los puntos claves
+            if len(matches) == 0:
+                return 0
+            return len(regiones_similares)/len(matches)  #Exportamos el porcentaje de similitud
+                 
+        #---------------------------- Importamos las imagenes y llamamos la funcion de comparacion ---------------------------------  
+        im_archivos = os.listdir()   #Vamos a importar la lista de archivos con la libreria os
+        if usuario_login+".jpg" in im_archivos:   #Comparamos los archivos con el que nos interesa
+            rostro_reg = cv2.imread(usuario_login+".jpg",0)     #Importamos el rostro del registro
+            rostro_log = cv2.imread(usuario_login+"LOG.jpg",0)  #Importamos el rostro del inicio de sesion
+            similitud = orb_sim(rostro_reg, rostro_log)
+            if similitud >= 0.75:
+                pant2.destroy()
+                messagebox.showinfo(message="Inicio de Sesion Exitoso,usuario y fecha registrados", title="LOGIN")
+                print("Bienvenido al sistema usuario: ",usuario_login)
+                print("Compatibilidad con la foto del registro: ",similitud)
+                fecha1= datetime.now()
+                fecha=fecha1.strftime("%d/%m/%Y----------hora: %H:%M:%S")
+                log_usuario3 = verificacion_usuario.get() 
+                f=open("registro.csv","a")
+                f.write("\n"+"USUARIO:"+ log_usuario3 + "-----" +"fecha:"+str(fecha)+"Temperatura:"+str(round(celcius, 2)))
+                f.close()
+                
+            else:
+                pant2.destroy()
+                messagebox.showinfo(message="Rostro incompatible", title="registro")
+                print("Rostro incorrecto, Cerifique su usuario")
+                print("Compatibilidad con la foto del registro: ",similitud)
+                #Label(pantalla2, text = "Incompatibilidad de rostros", fg = "red", font = ("Calibri",11)).pack()
+        else:
+            pant2.destroy()
+            print("Usuario no encontrado")
+            messagebox.showinfo(message="Usuario no encontrado", title="registro")
+            
+            #------------------------Funcion que asignaremos al boton login -------------------------------------------------       
+    
+    def login2():
+        global pant2
+        global verificacion_usuario
+        global usuario_entrada2     
+        pant2 = Toplevel(pantalla1)
+        pant2.title("Login")
+        width= pant2.winfo_screenwidth()  
+        height= pant2.winfo_screenheight()
+        pant2.geometry("%dx%d" % (width, height))
+        pant2.config(background='LightGoldenrod1')
+        verificacion_usuario = StringVar()
+
+              #---------------------------------- Ingresamos los datos --------------------------
+        Label(pant2,text = "Login con registro facial", bg = "gray", width = "300", height = "2", font = ("Verdana", 26)).pack() 
+        Label(pant2,text = "",background='LightGoldenrod1').pack()
+        Label(pant2,text = "",background='LightGoldenrod1').pack()
+        Label(pant2, text = "ingresar nombre de usuario:", font = ("Verdana", 15)).pack()
+        usuario_entrada2 = Entry(pant2, textvariable = verificacion_usuario, font = ("Verdana", 20))
+        usuario_entrada2.pack()
+        Label(pant2, text = "", background='LightGoldenrod1').pack()
+
+        #------------ Vamos a crear el boton para hacer el login facial --------------------
+        Label(pant2, text = "", background='LightGoldenrod1').pack()
+        Button(pant2, text = "Inicio de Sesion Facial",  font = ("Verdana", 20), background= "DarkOrange1",command =login_facial).pack()
+        Label(pant2, text = "", background='LightGoldenrod1').pack()
+        Label(pant2, text = "", background='LightGoldenrod1').pack()
+        Button(pant2, text = "regresar",height = "2", width = "20",  font = ("Verdana", 10), background= "DarkOrange1",command = pant2.destroy).pack()
+
+    def pant():
+        global pantalla1          #Globalizamos la variable para usarla en otras funciones
+        pantalla1 = Tk()
+        width= pantalla1.winfo_screenwidth()  
+        height= pantalla1.winfo_screenheight()
+        pantalla1.geometry("%dx%d" % (width, height))  #Asignamos el tamaño de la ventana 
+        pantalla1.config(background='LightGoldenrod1')
+        pantalla1.title("proyecto ipn")       #Asignamos el titulo de la pantalla
+        Label(pantalla1, text = "SISTEMA DE CONTROL DE ACCESO", bg = "gray", width = "300", height = "2", font = ("Verdana", 26)).pack() #Asignamos caracteristicas de la ventana  
+
+        #------------------------- Vamos a Crear los Botones ------------------------------------------------------    
+        Label(pantalla1, text = "",background='LightGoldenrod1').pack()  #Creamos el espacio entre el titulo y el primer boton
+        Button(pantalla1, text = "Login con rostro", height = "2", width = "20",  font = ("Verdana", 15), background= "DarkOrange1", command = login2).place(relx=0.6, rely=0.1)
+        Button(pantalla1, text = "Login con huella digital", height = "2", width = "20",  font = ("Verdana", 15), background= "DarkOrange1", command = iniciar_Sesion).place(relx=0.6, rely=0.25)
+        Label(pantalla1, text = "",background='LightGoldenrod1').pack()
+        Button(pantalla1, text = "Registrar rostro", height = "2", width = "20",  font = ("Verdana", 15), background= "DarkOrange1", command = pantalla1.destroy).place(relx=0.3, rely=0.1)
+        Button(pantalla1, text = "Registrar huella digital", height = "2", width = "20",  font = ("Verdana", 15), background= "DarkOrange1", command = pantalla1.destroy).place(relx=0.3, rely=0.20)
+        Button(pantalla1, text = "Eliminar huella digital", height = "2", width = "20",  font = ("Verdana", 15), background= "DarkOrange1", command = pantalla1.destroy).place(relx=0.3, rely=0.30)
+        
+        Button(pantalla1, text = "SALIR",height = "2", width = "20",  font = ("Verdana", 10), background= "DarkOrange1",command = pantalla1.destroy).place(relx=0.5, rely=0.5)
+        Label(pantalla1, text = "",background='LightGoldenrod1').pack()
+
+        pantalla1.mainloop()
+
+    pant()
+
+b1=Button(index, text="Entrar", command=ingresar)
+b1.pack()
+
+lspace=Label(index, text="", background="DeepPink4")
+lspace.pack()
+
+luser=Label(index, text="O ingrese como un usuario público")
+luser.pack()
+
+lspace=Label(index, text="", background="DeepPink4")
+lspace.pack()
+
+b2=Button(index, text="Entrar", command=user_public)
+b2.pack()
+
+lspace=Label(index, text="", background="DeepPink4")
+lspace.pack()
+
+salir=Button(index, text="salir", command=index.destroy)
+salir.pack()
+
+lspace=Label(index, text="", background="DeepPink4")
+lspace.pack()
+
+index.mainloop()
